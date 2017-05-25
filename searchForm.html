@@ -1,0 +1,78 @@
+<html ng-app="gitHubApp">
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.19/angular.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
+    <meta title="Exercicio Js">
+</head>
+
+<body ng-controller="searchController as ctrl">
+<form ng-submit="ctrl.getUsers()">
+    <div style="width: 50%; margin: auto; height: 50%">
+        <div style="display: block">
+            <input id="searhField" ng-model="ctrl.searchField" placeholder="Enter username arg..."
+                   ng-keyup="ctrl.getUsers()"
+                   class="autocomplete">
+            <a class="waves-effect waves-light btn" type="submit" style="width: auto">Enviar</a>
+        </div>
+
+        <ul ng-show="ctrl.autocompleting" class="collection">
+            <li ng-repeat="result in ctrl.flattenedResults" class="collection-item avatar">
+                <img ng-src="{{result.avatar_url}}" alt="{{result.bio}}" class="circle">
+                <a>{{result.fragment}}</a>
+            </li>
+        </ul>
+    </div>
+</form>
+
+<!-- Compiled and minified CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/css/materialize.min.css">
+
+<!-- Compiled and minified JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.min.js"></script>
+
+<script type="text/javascript">
+    angular.module('gitHubApp', [])
+        .controller('searchController', ['$http', '$document', function ($http) {
+                let self = this;
+
+                self.flattenedResults = [];
+                self.autocompleting = false;
+                self.MIN_LENGTH = 4;
+
+                self.flattenr = function (origArray) {
+                    let destArray = [];
+                    origArray.forEach(function (elem) {
+                        destArray.push(
+                            {
+                                avatar_url: elem.avatar_url,
+                                fragment: elem.text_matches[0].fragment,
+                                api_call: elem.url
+                            })
+                    });
+
+                    return destArray;
+                };
+
+                self.getUsers = function () {
+                    if (self.searchField.length > self.MIN_LENGTH) {
+                        self.autocompleting = true;
+
+                        $http.get('https://api.github.com/search/users', {
+                            params: {q: self.searchField + " in:fullname"},
+                            headers: {'Accept': 'application/vnd.github.v3.text-match+json'}
+                        }).then(function (response) {
+                            self.flattenedResults = self.flattenr(response.data.items);
+                        });
+                    }
+
+                    else {
+                        self.autocompleting = false;
+                    }
+                }
+            }]
+        )
+</script>
+
+</body>
+</html>
